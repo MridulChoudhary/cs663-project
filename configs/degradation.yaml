@@ -1,0 +1,20 @@
+# Degradation presets (mirrors faithful_sr.data.degradation.PRESETS).
+# Order of operations (fixed): blur(HR) -> bicubic anti-aliased downsample -> noise(LR) -> 8-bit quantise -> JPEG
+# Each op: prob = probability applied, [low, high] = uniform parameter range.
+# blur_sigma in HR pixels, noise_sigma in 0..255 grey levels, jpeg_quality in 1..100.
+bicubic:
+  name: bicubic
+blur:
+  name: blur
+  blur_sigma: {prob: 1.0, low: 0.4, high: 1.6}
+noise:
+  name: noise
+  noise_sigma: {prob: 1.0, low: 1.0, high: 8.0}
+jpeg:
+  name: jpeg
+  jpeg_quality: {prob: 1.0, low: 50, high: 90}
+mixed:
+  name: mixed
+  blur_sigma: {prob: 0.7, low: 0.4, high: 1.6}
+  noise_sigma: {prob: 0.5, low: 1.0, high: 6.0}
+  jpeg_quality: {prob: 0.7, low: 55, high: 95}

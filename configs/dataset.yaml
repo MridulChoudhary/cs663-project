@@ -1,0 +1,36 @@
+# Dataset preparation config  (python scripts/prepare_dataset.py --config configs/dataset.yaml)
+# Paths are relative to the project root. Nothing under data/ is committed to git.
+seed: 663
+processed_dir: data/processed
+min_size: 96                 # images whose shorter side is below this are excluded
+near_duplicate_hamming: 3    # aHash distance for near-duplicate detection across splits
+scales: [3, 6]               # HR is mod-cropped to lcm(scales)=6 so 3x and 6x share one ground truth
+eval_degradations: [bicubic, mixed]   # fixed LR sets generated for val/test (see configs/degradation.yaml)
+require_splits: [train, val]
+
+subimage:                    # training HR sub-images (no overlap: avoids inflating the dataset)
+  size: 480
+  step: 480
+
+sources:
+  - name: div2k
+    dir: data/raw/DIV2K_train_HR          # 800 images, official DIV2K train
+    split: train
+    categories: [photographic]
+    license: "DIV2K (Agustsson & Timofte, CVPRW 2017) - academic research use only; not redistributed"
+  - name: div2kval
+    dir: data/raw/DIV2K_valid_HR          # 100 images, official DIV2K validation
+    split: auto                           # source-level random split (seeded)
+    ratios: {val: 0.5, test: 0.5}
+    categories: [photographic]
+    license: "DIV2K - academic research use only; not redistributed"
+  - name: poster
+    dir: data/raw/posters                 # user-supplied HR posters / artwork (test only)
+    split: test
+    tags_file: data/raw/posters/tags.csv  # filename,categories,license,notes  (categories ';'-separated)
+    license: "user-supplied; used for private evaluation only; not redistributed"
+  - name: real
+    dir: data/real_world                  # naturally low-res images, NO ground truth (qualitative only)
+    split: real_world
+    has_gt: false
+    license: "user-supplied"

@@ -1,0 +1,20 @@
+# Evaluation smoke test on the synthetic sample (CPU). Uses the smoke checkpoint.
+processed_dir: data/sample_processed
+output_dir: outputs/eval/smoke
+split: test
+scales: [3, 6]
+degradations: [bicubic, mixed]
+metrics: [psnr_y, ssim_y, lpips]
+n_visual: 2
+save_outputs: true
+rois: data/rois.json
+runtime_sizes: [[160, 90]]
+runtime_repeats: 2
+methods:
+  - {label: Nearest, method: nearest}
+  - {label: Bilinear, method: bilinear}
+  - {label: Bicubic, method: bicubic}
+  - {label: FSRNet-smoke, method: cnn, kwargs: {checkpoint: outputs/runs/smoke/best.pt}}
+  - {label: FSRNet-missing, method: cnn, kwargs: {checkpoint: models/does_not_exist.pt}}
+six_x_methods:
+  - {label: FSRNet-smoke 3x>3x>down, method: cnn, kwargs: {checkpoint: outputs/runs/smoke/best.pt, six_strategy: cnn_twice_then_down}}

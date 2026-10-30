@@ -1,0 +1,25 @@
+# SRCNN (Dong et al. 2016, 9-5-5) baseline, same data/loss/schedule as FSRNet for a fair comparison.
+output_dir: outputs/runs/srcnn_x3_l1_bicubic
+model: {name: srcnn, scale: 3}
+data:
+  train_dir: data/processed/train_sub
+  val_lr_dir: data/processed/val/x3/bicubic
+  val_hr_dir: data/processed/val/HR
+  lr_patch: 48
+  degradation: bicubic
+  augment: flips_rot
+  repeat: 4
+  workers: 2
+  val_center_crop: 480
+train:
+  device: auto
+  seed: 663
+  iterations: 30000
+  batch_size: 16
+  lr: 2.0e-4
+  warmup: 500
+  loss: l1
+  grad_clip: 1.0
+  val_every: 2000
+  ckpt_every: 2000
+  log_every: 200

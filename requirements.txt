@@ -1,0 +1,16 @@
+# Core (tested 2026-10-31 with Python 3.13: numpy 2.5.3, scipy 1.18.1, pillow 12.3.0, torch 2.15.0,
+# torchvision 0.29.2, scikit-image 0.26.0, matplotlib 3.11.2, pandas 3.0.5, gradio 6.31.0).
+# Lower bounds only, so Colab's preinstalled torch/CUDA build is reused.
+numpy>=1.24
+scipy>=1.10
+pillow>=10.1
+opencv-python-headless>=4.8
+scikit-image>=0.21
+matplotlib>=3.7
+pandas>=2.0
+tabulate>=0.9
+pyyaml>=6.0
+torch>=2.1
+torchvision>=0.16
+gradio>=5.0
+pytest>=7.4

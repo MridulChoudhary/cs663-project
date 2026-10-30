@@ -1,0 +1,14 @@
+# Tiny synthetic dataset for smoke tests. Create it with: python scripts/make_sample_data.py
+seed: 663
+processed_dir: data/sample_processed
+min_size: 96
+near_duplicate_hamming: 3
+scales: [3, 6]
+eval_degradations: [bicubic, mixed]
+require_splits: [train, val, test]
+subimage: {size: 240, step: 240}
+sources:
+  - {name: strain, dir: data/sample/train, split: train, categories: [poster], license: "procedurally generated"}
+  - {name: sval, dir: data/sample/val, split: val, categories: [poster], license: "procedurally generated"}
+  - {name: poster, dir: data/sample/posters, split: test, tags_file: data/sample/posters/tags.csv}
+  - {name: real, dir: data/sample/real_world, split: real_world, has_gt: false}

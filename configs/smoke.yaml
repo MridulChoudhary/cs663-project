@@ -1,0 +1,25 @@
+# CPU smoke test on the synthetic sample data (~1 minute).
+# Prereq: python scripts/make_sample_data.py && python scripts/prepare_dataset.py --config configs/sample_dataset.yaml
+output_dir: outputs/runs/smoke
+model: {name: fsrnet, scale: 3, channels: 16, n_blocks: 2, bicubic_skip: true}
+data:
+  train_dir: data/sample_processed/train_sub
+  val_lr_dir: data/sample_processed/val/x3/bicubic
+  val_hr_dir: data/sample_processed/val/HR
+  lr_patch: 24
+  degradation: bicubic
+  augment: flips_rot
+  repeat: 1
+  workers: 0
+  val_center_crop: 120
+train:
+  device: auto
+  seed: 663
+  iterations: 40
+  batch_size: 4
+  lr: 1.0e-3
+  loss: l1
+  amp: false
+  val_every: 20
+  ckpt_every: 20
+  log_every: 10

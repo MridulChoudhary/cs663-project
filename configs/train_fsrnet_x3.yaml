@@ -1,0 +1,31 @@
+# Main model: FSRNet 3x, L1 loss, bicubic degradation (baseline for ablations A1/A2).
+# Colab T4: ~25-40 min for 30k iterations. Resume after a disconnect with --resume auto.
+#   A1 (loss):        train.loss=mse        output_dir=outputs/runs/fsrnet_x3_mse_bicubic
+#   A2 (degradation): data.degradation=mixed output_dir=outputs/runs/fsrnet_x3_l1_mixed
+output_dir: outputs/runs/fsrnet_x3_l1_bicubic
+model: {name: fsrnet, scale: 3, channels: 48, n_blocks: 8, bicubic_skip: true}
+data:
+  train_dir: data/processed/train_sub
+  val_lr_dir: data/processed/val/x3/bicubic
+  val_hr_dir: data/processed/val/HR
+  lr_patch: 48            # HR patch 144x144
+  degradation: bicubic
+  augment: flips_rot      # DIV2K photos: flips/rotations do not change meaning
+  repeat: 4               # 4 random patches per sub-image per epoch
+  workers: 2
+  val_center_crop: 480    # validate on 480x480 HR centre crops (fast, fixed)
+  val_max_images: 0       # 0 = all validation images
+train:
+  device: auto
+  seed: 663
+  iterations: 30000
+  batch_size: 16
+  lr: 5.0e-4
+  warmup: 500
+  min_lr_ratio: 0.01
+  loss: l1
+  amp: false              # small model: fp32 is fast enough and avoids fp16 issues
+  grad_clip: 1.0
+  val_every: 2000
+  ckpt_every: 2000
+  log_every: 200

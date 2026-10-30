@@ -1,0 +1,6 @@
+{
+  "poster_film01": [
+    {"label": "text_logo", "box": [120, 1500, 900, 240], "note": "title lettering"},
+    {"label": "text_logo", "box": [96, 1800, 600, 120], "note": "credits block (small text)"}
+  ]
+}

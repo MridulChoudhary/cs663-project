@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+.ipynb_checkpoints/
+.gradio/
+
+# data and generated artefacts (never committed: licensing + size)
+data/*
+!data/README.md
+!data/rois.example.json
+outputs/*
+!outputs/.gitkeep
+models/pretrained/
+models/*.pt
+!models/README.md
+*.tmp
+*.part

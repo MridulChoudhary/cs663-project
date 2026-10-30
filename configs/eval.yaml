@@ -1,0 +1,32 @@
+# Main benchmark (E1-E8). Run on Colab GPU after training:
+#   python scripts/evaluate_model.py --config configs/eval.yaml --runtime --real-world
+# Missing checkpoints/weights are reported as "not run" in status.csv, never silently skipped.
+processed_dir: data/processed
+output_dir: outputs/eval/main
+split: test
+scales: [3, 6]
+degradations: [bicubic, mixed]     # E5: clean vs. controlled realistic degradation
+metrics: [psnr_y, ssim_y, lpips]   # psnr_rgb / edge_psnr / overshoot are always computed
+n_visual: 8                        # images that get saved outputs + comparison grids
+visual_ids: []                     # or list specific image ids (e.g. your best posters)
+save_outputs: true
+rois: data/rois.json               # manual text/logo boxes (optional); auto ROIs otherwise
+real_world_scale: 3
+runtime_sizes: [[320, 180], [1280, 720]]   # 1280x720 -> 3840x2160 (4K) and 7680x4320 (8K)
+runtime_repeats: 3
+runtime_warmup: 1
+
+methods:
+  - {label: Nearest, method: nearest}
+  - {label: Bilinear, method: bilinear}
+  - {label: Bicubic, method: bicubic}
+  - {label: SRCNN, method: cnn, kwargs: {checkpoint: models/srcnn_x3_l1_bicubic.pt}}
+  - {label: FSRNet-L1, method: cnn, kwargs: {checkpoint: models/fsrnet_x3_l1_bicubic.pt, tile: 512}}
+  - {label: FSRNet-MSE, method: cnn, kwargs: {checkpoint: models/fsrnet_x3_mse_bicubic.pt, tile: 512}}
+  - {label: FSRNet-L1-mixed, method: cnn, kwargs: {checkpoint: models/fsrnet_x3_l1_mixed.pt, tile: 512}}
+  - {label: Real-ESRGAN, method: realesrgan, kwargs: {tile: 256, overlap: 16}}
+
+# E4: extra 6x strategies (the 'cnn' entries above use six_strategy=cnn_then_bicubic at 6x)
+six_x_methods:
+  - {label: FSRNet-L1 3x>3x>down, method: cnn,
+     kwargs: {checkpoint: models/fsrnet_x3_l1_bicubic.pt, tile: 512, six_strategy: cnn_twice_then_down}}

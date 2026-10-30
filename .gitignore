@@ -16,3 +16,6 @@ models/*.pt
 !models/README.md
 *.tmp
 *.part
+
+# local sync staging
+_sync/

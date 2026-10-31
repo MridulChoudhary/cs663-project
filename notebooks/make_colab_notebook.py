@@ -11,9 +11,9 @@ Runtime → Change runtime type → **T4 GPU**. Every step is restartable: data,
 live on Google Drive (`MyDrive/cs663`), and training resumes exactly with `--resume auto` after a disconnect.
 
 **Before running:** upload to Google Drive `MyDrive/cs663/`:
-* `posters/` — the 54 genuine hi-res originals **plus `tags.csv`** (from `data/raw/posters/` in the project folder)
+* `posters/` — the 54 genuine hi-res originals (tags and ROI boxes come with the code: `data/poster_tags.csv`, `data/rois.json`)
 * `posters_upscaled/` — the AI-upscaled files (real-world qualitative set, never ground truth)
-* `rois.json` — manual text/face boxes (from `data/rois.json`)"""),
+"""),
     ("code", """# 1. Drive + code
 from google.colab import drive
 drive.mount('/content/drive')
@@ -38,7 +38,7 @@ for part in ['DIV2K_train_HR', 'DIV2K_valid_HR']:
 # user data
 !mkdir -p data/raw/posters data/raw/posters_upscaled data/real_world
 !cp -rn $DRIVE/posters/. data/raw/posters/ ; cp -rn $DRIVE/posters_upscaled/. data/raw/posters_upscaled/ ; cp -rn $DRIVE/real_world/. data/real_world/ ; cp -n $DRIVE/rois.json data/rois.json 2>/dev/null; true
-!ls data/raw/DIV2K_train_HR | wc -l; ls data/raw/posters | wc -l; ls data/raw/posters_upscaled | wc -l; test -f data/raw/posters/tags.csv && echo tags OK"""),
+!ls data/raw/DIV2K_train_HR | wc -l; ls data/raw/posters | wc -l; ls data/raw/posters_upscaled | wc -l"""),
     ("code", """# 3. Prepare dataset (manifest, splits, train sub-images, fixed val/test LR sets) - ~10 min first time
 !python scripts/prepare_dataset.py --config configs/dataset.yaml
 !cat data/processed/dataset_summary.json | head -40"""),

@@ -31,7 +31,7 @@ sources:
     dir: data/raw/posters                 # genuine hi-res posters/artwork (numbered files)
     split: auto
     ratios: {train: 0.7, test: 0.3}       # train part used only by ablation A3 (data.include_sources)
-    tags_file: data/raw/posters/tags.csv  # filename,categories,license,notes  (categories ';'-separated)
+    tags_file: data/poster_tags.csv       # committed: filename,categories,license,notes (assistant-annotated, author-reviewed)
     license: "free-reuse source site (unrestricted reuse/modification); private academic evaluation; not redistributed"
     max_long_side: 3840                   # anti-aliased reduction of 4K-14K originals (also suppresses JPEG blocking)
     alpha_background: [0.0, 0.0, 0.0]     # transparent areas flattened onto black

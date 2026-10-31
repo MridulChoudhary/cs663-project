@@ -10,14 +10,15 @@ cells = [
 Runtime → Change runtime type → **T4 GPU**. Every step is restartable: data, checkpoints and results
 live on Google Drive (`MyDrive/cs663`), and training resumes exactly with `--resume auto` after a disconnect.
 
-**Before running:** put your HR posters/artwork in `MyDrive/cs663/posters/` together with a `tags.csv`
-(`filename,categories,license,notes`; categories from `poster;illustration;photographic;text_logo;fine_lines;texture`).
-Optional: naturally low-res images in `MyDrive/cs663/real_world/`, manual ROI boxes in `MyDrive/cs663/rois.json`."""),
+**Before running:** upload to Google Drive `MyDrive/cs663/`:
+* `posters/` — the 54 genuine hi-res originals **plus `tags.csv`** (from `data/raw/posters/` in the project folder)
+* `posters_upscaled/` — the AI-upscaled files (real-world qualitative set, never ground truth)
+* `rois.json` — manual text/face boxes (from `data/rois.json`)"""),
     ("code", """# 1. Drive + code
 from google.colab import drive
 drive.mount('/content/drive')
 DRIVE = '/content/drive/MyDrive/cs663'
-!mkdir -p $DRIVE/outputs $DRIVE/models $DRIVE/data_cache $DRIVE/posters $DRIVE/real_world
+!mkdir -p $DRIVE/outputs $DRIVE/models $DRIVE/data_cache $DRIVE/posters $DRIVE/posters_upscaled $DRIVE/real_world
 %cd /content
 !test -d cs663-project || git clone REPO_URL cs663-project
 %cd /content/cs663-project
@@ -35,9 +36,9 @@ for part in ['DIV2K_train_HR', 'DIV2K_valid_HR']:
     if not os.path.exists(f'data/raw/{part}'):
         !mkdir -p data/raw && unzip -q {z} -d data/raw/
 # user data
-!mkdir -p data/raw/posters data/real_world
-!cp -rn $DRIVE/posters/. data/raw/posters/ ; cp -rn $DRIVE/real_world/. data/real_world/ ; cp -n $DRIVE/rois.json data/rois.json 2>/dev/null; true
-!ls data/raw/DIV2K_train_HR | wc -l; ls data/raw/posters | head"""),
+!mkdir -p data/raw/posters data/raw/posters_upscaled data/real_world
+!cp -rn $DRIVE/posters/. data/raw/posters/ ; cp -rn $DRIVE/posters_upscaled/. data/raw/posters_upscaled/ ; cp -rn $DRIVE/real_world/. data/real_world/ ; cp -n $DRIVE/rois.json data/rois.json 2>/dev/null; true
+!ls data/raw/DIV2K_train_HR | wc -l; ls data/raw/posters | wc -l; ls data/raw/posters_upscaled | wc -l; test -f data/raw/posters/tags.csv && echo tags OK"""),
     ("code", """# 3. Prepare dataset (manifest, splits, train sub-images, fixed val/test LR sets) - ~10 min first time
 !python scripts/prepare_dataset.py --config configs/dataset.yaml
 !cat data/processed/dataset_summary.json | head -40"""),
@@ -47,7 +48,7 @@ for part in ['DIV2K_train_HR', 'DIV2K_valid_HR']:
 !python scripts/train_model.py --config configs/smoke.yaml"""),
     ("md", """## 5. Training runs
 Re-run a cell after a disconnect: `--resume auto` continues from `outputs/runs/<name>/latest.pt`.
-Order of priority (1-week plan): main model → MSE ablation → mixed-degradation ablation → SRCNN."""),
+Order of priority (1-week plan): main model → MSE ablation → mixed-degradation ablation → posters ablation (A3) → SRCNN."""),
     ("code", """# 5a. Main model: FSRNet x3, L1, bicubic degradation
 !python scripts/train_model.py --config configs/train_fsrnet_x3.yaml --resume auto
 !cp outputs/runs/fsrnet_x3_l1_bicubic/best.pt models/fsrnet_x3_l1_bicubic.pt"""),
@@ -57,7 +58,10 @@ Order of priority (1-week plan): main model → MSE ablation → mixed-degradati
     ("code", """# 5c. Ablation A2: train on the mixed (blur+noise+JPEG) degradation
 !python scripts/train_model.py --config configs/train_fsrnet_x3.yaml --resume auto data.degradation=mixed output_dir=outputs/runs/fsrnet_x3_l1_mixed
 !cp outputs/runs/fsrnet_x3_l1_mixed/best.pt models/fsrnet_x3_l1_mixed.pt"""),
-    ("code", """# 5d. SRCNN paper baseline
+    ("code", """# 5d. Ablation A3: DIV2K + poster training images (posters' own train split)
+!python scripts/train_model.py --config configs/train_fsrnet_x3.yaml --resume auto "data.include_sources=[div2k,poster]" output_dir=outputs/runs/fsrnet_x3_l1_bicubic_posters
+!cp outputs/runs/fsrnet_x3_l1_bicubic_posters/best.pt models/fsrnet_x3_l1_bicubic_posters.pt"""),
+    ("code", """# 5e. SRCNN paper baseline
 !python scripts/train_model.py --config configs/train_srcnn_x3.yaml --resume auto
 !cp outputs/runs/srcnn_x3_l1_bicubic/best.pt models/srcnn_x3_l1_bicubic.pt"""),
     ("code", """# Training curves

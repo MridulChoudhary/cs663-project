@@ -1,12 +1,15 @@
 # Dataset preparation config  (python scripts/prepare_dataset.py --config configs/dataset.yaml)
 # Paths are relative to the project root. Nothing under data/ is committed to git.
+# Decisions behind this file: docs/decisions.md ("Poster data", "Poster split", "Poster preprocessing").
 seed: 663
 processed_dir: data/processed
 min_size: 96                 # images whose shorter side is below this are excluded
 near_duplicate_hamming: 3    # aHash distance for near-duplicate detection across splits
 scales: [3, 6]               # HR is mod-cropped to lcm(scales)=6 so 3x and 6x share one ground truth
 eval_degradations: [bicubic, mixed]   # fixed LR sets generated for val/test (see configs/degradation.yaml)
-require_splits: [train, val]
+require_splits: [train, val, test]
+quality_flag_db: 45          # quality screen: flag GT images with almost no detail above half-Nyquist
+real_world_scale: 3
 
 subimage:                    # training HR sub-images (no overlap: avoids inflating the dataset)
   size: 480
@@ -25,12 +28,26 @@ sources:
     categories: [photographic]
     license: "DIV2K - academic research use only; not redistributed"
   - name: poster
-    dir: data/raw/posters                 # user-supplied HR posters / artwork (test only)
-    split: test
+    dir: data/raw/posters                 # genuine hi-res posters/artwork (numbered files)
+    split: auto
+    ratios: {train: 0.7, test: 0.3}       # train part used only by ablation A3 (data.include_sources)
     tags_file: data/raw/posters/tags.csv  # filename,categories,license,notes  (categories ';'-separated)
-    license: "user-supplied; used for private evaluation only; not redistributed"
+    license: "free-reuse source site (unrestricted reuse/modification); private academic evaluation; not redistributed"
+    max_long_side: 3840                   # anti-aliased reduction of 4K-14K originals (also suppresses JPEG blocking)
+    alpha_background: [0.0, 0.0, 0.0]     # transparent areas flattened onto black
+    quality_screen: true
+  - name: upscaled
+    dir: data/raw/posters_upscaled        # originally low-res, AI-upscaled by third-party services: NEVER ground truth
+    split: real_world
+    has_gt: false
+    license: "free-reuse source site; third-party AI upscale; private academic evaluation"
+    lr_downscale: 4                       # approximate original size (originals unavailable)
+    lr_max_long_side: 1280                # ~720p-class inputs, 3x -> ~4K
+    alpha_background: [0.0, 0.0, 0.0]
+    reference_upscaled: true              # show the supplied file (resized) as a labelled reference
   - name: real
-    dir: data/real_world                  # naturally low-res images, NO ground truth (qualitative only)
+    dir: data/real_world                  # any other naturally low-res images (qualitative only)
     split: real_world
     has_gt: false
     license: "user-supplied"
+    lr_max_long_side: 1280

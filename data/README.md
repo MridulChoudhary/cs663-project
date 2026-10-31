@@ -4,9 +4,10 @@
 |---|---|---|---|
 | `data/raw/DIV2K_train_HR/` | 800 DIV2K HR images (`DIV2K_train_HR.zip`) | train | Agustsson & Timofte, CVPRW 2017 — academic research use only. Download from the official DIV2K page; do not redistribute. |
 | `data/raw/DIV2K_valid_HR/` | 100 DIV2K HR validation images | seeded 50/50 → val / test | same |
-| `data/raw/posters/` | **Your** HR posters / artwork + `tags.csv` | test only | Must be images you own or may use for private evaluation. Record source + licence in `tags.csv`. Never redistributed. |
+| `data/raw/posters/` | Genuine hi-res posters / artwork (54 numbered files) + `tags.csv` | seeded 70/30 → train / test | Free-reuse source sites; private academic use; not redistributed. |
+| `data/raw/posters_upscaled/` | Posters that were low-res and **AI-upscaled by third-party services** | real_world (never ground truth) | Downscaled ×4 → LR input; the supplied file is shown as a labelled reference only. |
 | `data/real_world/` | Naturally low-res images (unknown history) | real_world (no ground truth) | Qualitative comparisons only — no scores are computed. |
-| `data/rois.json` | Optional manual ROI boxes (typography/logos) | — | see `rois.example.json` |
+| `data/rois.json` | Manual ROI boxes: `text_logo`, `text_small`, `face` on the poster test set (assistant-annotated, author-reviewed) | — | coordinates in `data/processed/test/HR/<id>.png` pixels |
 
 ## `tags.csv` format
 ```

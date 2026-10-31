@@ -3,6 +3,7 @@ output_dir: outputs/runs/srcnn_x3_l1_bicubic
 model: {name: srcnn, scale: 3}
 data:
   train_dir: data/processed/train_sub
+  include_sources: [div2k]   # DIV2K only (A3 adds 'poster')
   val_lr_dir: data/processed/val/x3/bicubic
   val_hr_dir: data/processed/val/HR
   lr_patch: 48

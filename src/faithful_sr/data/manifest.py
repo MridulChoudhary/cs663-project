@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import re
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 from typing import Iterable, Optional
@@ -43,10 +44,17 @@ class ManifestRow:
     license: str
     has_gt: bool
     notes: str = ""
+    preprocess: str = ""     # e.g. "long_side<=3840;alpha->black" (applied by prepare.py)
 
     @property
     def category_list(self) -> list[str]:
         return [c for c in self.categories.split(";") if c]
+
+
+def slugify(text: str) -> str:
+    """File stem -> safe id: lowercase ASCII letters/digits/underscores."""
+    s = re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
+    return s or "img"
 
 
 def file_sha1(path: Path) -> str:
@@ -95,23 +103,32 @@ def scan_source(name: str, directory: Path, root: Path, split: str, license: str
         return []
     tags = read_tags(tags_file)
     rows = []
+    used: set[str] = set()
+    Image.MAX_IMAGE_PIXELS = max(Image.MAX_IMAGE_PIXELS or 0, 250_000_000)
     for p in sorted(directory.rglob("*")):
         if p.suffix.lower() not in SUPPORTED_EXTENSIONS or p.name.startswith("."):
             continue
+        iid = f"{name}_{slugify(p.stem)}"
+        k = 2
+        while iid in used:                      # distinct files whose names slug identically
+            iid, k = f"{name}_{slugify(p.stem)}_{k}", k + 1
+        used.add(iid)
         try:
             with Image.open(p) as im:
-                im.load()
                 w, h = im.size
+                if im.format == "JPEG":
+                    im.draft("RGB", (max(64, w // 8), max(64, h // 8)))
+                im.load()
                 ah = average_hash(im)
         except Exception as e:  # corrupt file: record and exclude, never crash
             log(f"[manifest] corrupt/unreadable {p}: {e}")
-            rows.append(ManifestRow(f"{name}_{p.stem}", name, str(p.relative_to(root)), 0, 0, "", "0" * 16,
+            rows.append(ManifestRow(iid, name, str(p.relative_to(root)), 0, 0, "", "0" * 16,
                                     "", "excluded", license, False, f"unreadable: {e}"))
             continue
         t = tags.get(p.name, {})
         cats = t.get("categories") or list(categories)
         row = ManifestRow(
-            image_id=f"{name}_{p.stem}", source=name, rel_path=str(p.relative_to(root)).replace("\\", "/"),
+            image_id=iid, source=name, rel_path=str(p.relative_to(root)).replace("\\", "/"),
             width=w, height=h, sha1=file_sha1(p), ahash=ah, categories=";".join(cats),
             split=split, license=t.get("license") or license, has_gt=has_gt, notes=t.get("notes", ""))
         if min(w, h) < min_size:

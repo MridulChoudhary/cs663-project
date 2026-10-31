@@ -10,8 +10,10 @@ metrics: [psnr_y, ssim_y, lpips]   # psnr_rgb / edge_psnr / overshoot are always
 n_visual: 8                        # images that get saved outputs + comparison grids
 visual_ids: []                     # or list specific image ids (e.g. your best posters)
 save_outputs: true
-rois: data/rois.json               # manual text/logo boxes (optional); auto ROIs otherwise
+rois: data/rois.json               # manual text_logo / text_small / face boxes (assistant-annotated, author-reviewed)
+auto_face_exclude_prefixes: [poster_]   # Haar face detector is unreliable on stylized art; posters use manual faces
 real_world_scale: 3
+real_world_max_images: 0           # 0 = all prepared real-world inputs (74 upscaled posters)
 runtime_sizes: [[320, 180], [1280, 720]]   # 1280x720 -> 3840x2160 (4K) and 7680x4320 (8K)
 runtime_repeats: 3
 runtime_warmup: 1
@@ -24,6 +26,7 @@ methods:
   - {label: FSRNet-L1, method: cnn, kwargs: {checkpoint: models/fsrnet_x3_l1_bicubic.pt, tile: 512}}
   - {label: FSRNet-MSE, method: cnn, kwargs: {checkpoint: models/fsrnet_x3_mse_bicubic.pt, tile: 512}}
   - {label: FSRNet-L1-mixed, method: cnn, kwargs: {checkpoint: models/fsrnet_x3_l1_mixed.pt, tile: 512}}
+  - {label: FSRNet-L1+posters, method: cnn, kwargs: {checkpoint: models/fsrnet_x3_l1_bicubic_posters.pt, tile: 512}}
   - {label: Real-ESRGAN, method: realesrgan, kwargs: {tile: 256, overlap: 16}}
 
 # E4: extra 6x strategies (the 'cnn' entries above use six_strategy=cnn_then_bicubic at 6x)

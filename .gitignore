@@ -19,3 +19,4 @@ models/*.pt
 
 # local sync staging
 _sync/
+!data/rois.json

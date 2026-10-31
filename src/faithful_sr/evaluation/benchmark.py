@@ -116,7 +116,8 @@ def run_benchmark(cfg: dict, log=print) -> dict:
                 hr = get_hr(iid)
                 lr = load_image(lr_dir / f"{iid}.png").rgb
                 cats = rows[iid].category_list if iid in rows else []
-                rois = rois_used.setdefault(iid, rois_for_image(iid, hr, manual_rois))
+                rois = rois_used.setdefault(iid, rois_for_image(
+                    iid, hr, manual_rois, not iid.startswith(tuple(cfg.get("auto_face_exclude_prefixes", [])))))
                 outputs: dict[str, np.ndarray] = {}
                 for label, fn in fns.items():
                     t0 = time.perf_counter()
@@ -235,13 +236,22 @@ def run_runtime(cfg: dict, log=print) -> list[dict]:
 
 # ------------------------------------------------------------ real-world
 def run_real_world(cfg: dict, log=print) -> None:
-    """Qualitative only: no ground truth exists, so no scores are computed."""
+    """Qualitative only: no ground truth exists, so no scores are computed.
+
+    Inputs come from ``<processed>/real_world/LR`` (made by prepare_dataset). When a
+    third-party upscaled version exists (``REF``), it is shown as a labelled reference -
+    it is another model's estimate, not ground truth.
+    """
     processed = Path(cfg.get("processed_dir", "data/processed"))
-    root = Path(cfg.get("root", "."))
-    rows = [r for r in read_manifest(processed / "manifest.csv") if r.split == "real_world"]
+    lr_dir, ref_dir = processed / "real_world" / "LR", processed / "real_world" / "REF"
     out = Path(cfg["output_dir"]) / "real_world"
-    if not rows:
-        log("[real_world] no real-world images in manifest")
+    files = sorted(lr_dir.glob("*.png")) if lr_dir.exists() else []
+    if cfg.get("real_world_ids"):
+        files = [f for f in files if f.stem in set(cfg["real_world_ids"])]
+    if cfg.get("real_world_max_images"):
+        files = files[: int(cfg["real_world_max_images"])]
+    if not files:
+        log("[real_world] no prepared real-world inputs (run prepare_dataset)")
         return
     scale = int(cfg.get("real_world_scale", 3))
     fns = {}
@@ -250,26 +260,29 @@ def run_real_world(cfg: dict, log=print) -> None:
             fns[e["label"]] = get_method(e["method"], **e.get("kwargs", {}))
         except Exception as ex:
             log(f"[real_world] {e['label']}: not run - {ex}")
-    notes = ["# Real-world images (qualitative only - no ground truth, no scores)\n",
-             "Fill in observations per image: lettering changes, face changes, halos/ringing, "
-             "invented-looking textures ('possible hallucination'), compression artefacts amplified.\n"]
-    for r in rows:
-        img = load_image(root / r.rel_path).rgb
-        if max(img.shape[:2]) > 800:
-            log(f"[real_world] {r.image_id} is large; using its centre 800px crop")
-            h, w = img.shape[:2]
-            y, x = max(0, (h - 800) // 2), max(0, (w - 800) // 2)
-            img = img[y:y + 800, x:x + 800]
-        outs = {k: f(img, scale) for k, f in fns.items()}
+    lic = {r.image_id: r.license for r in read_manifest(processed / "manifest.csv")}
+    notes = ["# Real-world images (qualitative only - no ground truth, no scores)\n\n",
+             "'Commercial upscaler (reference)' = the file as supplied (already AI-upscaled by a third-party "
+             "service), resized to the same size. It is another model's guess, NOT ground truth.\n\n",
+             "Per image, note: lettering changes, face changes, halos/ringing, invented-looking textures "
+             "('possible hallucination'), amplified compression artefacts, and where methods disagree.\n"]
+    for f in files:
+        iid = f.stem
+        img = load_image(f).rgb
+        outs = {k: fn(img, scale) for k, fn in fns.items()}
+        if (ref_dir / f.name).exists():
+            outs["Commercial upscaler (reference)"] = load_image(ref_dir / f.name).rgb
         h, w = img.shape[:2]
-        cb = [w * scale // 3, h * scale // 3, w * scale // 4, h * scale // 4]
+        cw, ch = max(64, w * scale // 4), max(64, h * scale // 4)
+        cb = [(w * scale - cw) // 2, (h * scale - ch) // 3, cw, ch]
         imgs = [interp.upscale(img, scale, "nearest")] + list(outs.values())
         labels = ["input (nearest)"] + list(outs)
-        save(labelled_grid([crop(i, cb) for i in imgs], labels, cols=len(imgs), cell=300,
-                           title=f"{r.image_id} (real-world, x{scale}, centre crop) - qualitative"),
-             out / f"{r.image_id}_crops.png")
-        save(labelled_grid(imgs, labels, cols=min(4, len(imgs)), cell=320, title=f"{r.image_id} x{scale}"),
-             out / f"{r.image_id}_grid.png")
-        notes.append(f"\n## {r.image_id}\nSource/licence: {r.license}\n\n- Observations: _pending human review_\n")
+        save(labelled_grid([crop(i, cb) for i in imgs], labels, cols=min(4, len(imgs)), cell=300,
+                           title=f"{iid} (real-world, x{scale}, detail crop) - qualitative only"),
+             out / f"{iid}_crops.png")
+        save(labelled_grid(imgs, labels, cols=min(4, len(imgs)), cell=320, title=f"{iid} x{scale}"),
+             out / f"{iid}_grid.png")
+        notes.append(f"\n## {iid}\nSource/licence: {lic.get(iid, '?')}\n\n- Observations: _pending review_\n")
+        log(f"[real_world] {iid}")
     (out / "observations_template.md").write_text("".join(notes), encoding="utf-8")
-    log(f"[real_world] {len(rows)} images -> {out}")
+    log(f"[real_world] {len(files)} images -> {out}")

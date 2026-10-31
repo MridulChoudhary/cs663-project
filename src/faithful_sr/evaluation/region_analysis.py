@@ -11,7 +11,10 @@ ROI sources, in priority order (all repeatable):
 2. **Automatic** boxes, computed deterministically from the HR image only
    (never from a method's output, so no method is favoured):
 
-   * ``face``      — largest OpenCV Haar-cascade frontal face (if any);
+   * ``face``      — largest OpenCV Haar-cascade frontal face (if any). The cascade is
+                     trained on photos and fires on stylized art (balls, fire, crystals), so
+                     it is disabled for ids matching ``auto_face_exclude_prefixes`` (posters),
+                     whose faces are annotated manually instead;
    * ``edges``     — the window with the highest fraction of strong Sobel edges
                      (lines, lettering, graphic elements);
    * ``texture``   — the window with the highest Laplacian energy among windows
@@ -52,7 +55,7 @@ def _windows(h: int, w: int, size: int, step: int):
             yield y, x
 
 
-def auto_rois(hr: np.ndarray, win_frac: float = 0.15) -> list[dict]:
+def auto_rois(hr: np.ndarray, win_frac: float = 0.15, face: bool = True) -> list[dict]:
     h, w = hr.shape[:2]
     size = max(48, int(min(h, w) * win_frac) // SNAP * SNAP)
     step = size // 2
@@ -77,9 +80,9 @@ def auto_rois(hr: np.ndarray, win_frac: float = 0.15) -> list[dict]:
         rois.append({"label": "texture", "box": [int(arr[i_tex, 1]), int(arr[i_tex, 0]), size, size], "source": "auto"})
     i_flat = int(arr[:, 4].argmin())
     rois.append({"label": "flat", "box": [int(arr[i_flat, 1]), int(arr[i_flat, 0]), size, size], "source": "auto"})
-    face = detect_face(hr)
-    if face is not None:
-        rois.append({"label": "face", "box": face, "source": "auto"})
+    fbox = detect_face(hr) if face else None
+    if fbox is not None:
+        rois.append({"label": "face", "box": fbox, "source": "auto"})
     for r in rois:
         r["box"] = snap_box(r["box"], h, w)
     return rois
@@ -122,11 +125,11 @@ def load_manual_rois(path: Optional[str | Path]) -> dict[str, list[dict]]:
     return data
 
 
-def rois_for_image(image_id: str, hr: np.ndarray, manual: dict) -> list[dict]:
+def rois_for_image(image_id: str, hr: np.ndarray, manual: dict, auto_face: bool = True) -> list[dict]:
     h, w = hr.shape[:2]
     rois = [dict(r, box=snap_box(r["box"], h, w)) for r in manual.get(image_id, [])]
     manual_labels = {r["label"] for r in rois}
-    rois += [r for r in auto_rois(hr) if r["label"] not in manual_labels]
+    rois += [r for r in auto_rois(hr, face=auto_face) if r["label"] not in manual_labels]
     return rois
 
 

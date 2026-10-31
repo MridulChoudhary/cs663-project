@@ -99,8 +99,16 @@ def train(cfg: dict, resume: Optional[str] = None, log=print) -> dict:
     scale = int(mcfg["scale"])
 
     model = build_model(mcfg).to(device)
+    files = None
+    if dcfg.get("include_sources"):          # e.g. [div2k] or [div2k, poster]  (ablation A3)
+        from faithful_sr.data.patches import list_images
+        prefixes = tuple(f"{src}_" for src in dcfg["include_sources"])
+        files = [f for f in list_images(Path(dcfg["train_dir"])) if f.name.startswith(prefixes)]
+        if not files:
+            raise RuntimeError(f"No training sub-images for sources {dcfg['include_sources']} in {dcfg['train_dir']}")
     train_ds = TrainPatchDataset(dcfg["train_dir"], scale, dcfg.get("lr_patch", 48), dcfg.get("degradation", "bicubic"),
-                                 dcfg.get("augment", "flips_rot"), seed, dcfg.get("repeat", 1), dcfg.get("cache", False))
+                                 dcfg.get("augment", "flips_rot"), seed, dcfg.get("repeat", 1), dcfg.get("cache", False),
+                                 files=files)
     val_ds = PairedImageDataset(dcfg["val_lr_dir"], dcfg["val_hr_dir"], scale, dcfg.get("val_center_crop", 0))
     sampler = ResumableSampler(len(train_ds), seed)
     bs = int(tcfg.get("batch_size", 16))

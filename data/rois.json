@@ -1,0 +1,210 @@
+{
+ "poster_1166038": [
+  {
+   "label": "text_logo",
+   "box": [
+    3100,
+    940,
+    500,
+    170
+   ],
+   "note": "MUSTANG livery lettering"
+  },
+  {
+   "label": "text_small",
+   "box": [
+    2390,
+    716,
+    490,
+    100
+   ],
+   "note": "ROCKET LEAGUE roof text"
+  }
+ ],
+ "poster_1253488": [
+  {
+   "label": "text_logo",
+   "box": [
+    580,
+    1020,
+    930,
+    260
+   ],
+   "note": "NEON title"
+  },
+  {
+   "label": "text_small",
+   "box": [
+    710,
+    1440,
+    650,
+    84
+   ],
+   "note": "NIKADRAWS credit"
+  },
+  {
+   "label": "face",
+   "box": [
+    2440,
+    650,
+    600,
+    680
+   ],
+   "note": "Neon face (painted)"
+  }
+ ],
+ "poster_1321613": [
+  {
+   "label": "text_logo",
+   "box": [
+    200,
+    740,
+    1470,
+    330
+   ],
+   "note": "TEAM brushed title"
+  },
+  {
+   "label": "face",
+   "box": [
+    2540,
+    540,
+    300,
+    360
+   ],
+   "note": "Reyna face"
+  }
+ ],
+ "poster_1364638": [
+  {
+   "label": "text_logo",
+   "box": [
+    1300,
+    1265,
+    1350,
+    245
+   ],
+   "note": "JUJUTSU KAISEN logo over manga hatching"
+  }
+ ],
+ "poster_1379693": [
+  {
+   "label": "text_logo",
+   "box": [
+    2380,
+    230,
+    690,
+    550
+   ],
+   "note": "BRAWL STARS logo"
+  },
+  {
+   "label": "face",
+   "box": [
+    1250,
+    850,
+    560,
+    380
+   ],
+   "note": "Jessie face (cartoon)"
+  }
+ ],
+ "poster_1401918": [
+  {
+   "label": "text_logo",
+   "box": [
+    1236,
+    1075,
+    1400,
+    295
+   ],
+   "note": "JUJUTSU KAISEN logo"
+  },
+  {
+   "label": "text_small",
+   "box": [
+    1420,
+    1515,
+    1000,
+    72
+   ],
+   "note": "subtitle line (small serif)"
+  },
+  {
+   "label": "face",
+   "box": [
+    1640,
+    200,
+    400,
+    370
+   ],
+   "note": "Yuji face (anime cel)"
+  }
+ ],
+ "poster_1411721": [
+  {
+   "label": "text_logo",
+   "box": [
+    1405,
+    820,
+    1025,
+    360
+   ],
+   "note": "kanji title"
+  },
+  {
+   "label": "text_small",
+   "box": [
+    1665,
+    1205,
+    540,
+    115
+   ],
+   "note": "kanji subtitle"
+  },
+  {
+   "label": "face",
+   "box": [
+    1536,
+    410,
+    420,
+    360
+   ],
+   "note": "Yuta face (anime cel)"
+  }
+ ],
+ "poster_813161": [
+  {
+   "label": "text_logo",
+   "box": [
+    1318,
+    1715,
+    1205,
+    512
+   ],
+   "note": "QUACK QUACKS title"
+  },
+  {
+   "label": "text_small",
+   "box": [
+    1200,
+    1935,
+    1440,
+    84
+   ],
+   "note": "small line between title words"
+  }
+ ],
+ "poster_1329765": [
+  {
+   "label": "face",
+   "box": [
+    740,
+    640,
+    700,
+    640
+   ],
+   "note": "Gojo face (line art + eye glow)"
+  }
+ ]
+}

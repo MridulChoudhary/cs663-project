@@ -100,8 +100,15 @@ def pil_to_float(pil: Image.Image) -> LoadedImage:
     return LoadedImage(to_float(rgb), alpha, mode, None, warnings)
 
 
-def load_image(path: str | Path) -> LoadedImage:
+def load_image(path: str | Path, max_pixels: int = MAX_INPUT_PIXELS,
+               max_long_side: Optional[int] = None) -> LoadedImage:
     """Load an image file as RGB float32, applying EXIF orientation.
+
+    ``max_long_side``: if given and the image is larger, it is reduced with an
+    anti-aliased filter so its longer side equals ``max_long_side`` (used by the
+    dataset step for very large posters).  Very large files are first reduced by
+    an integer factor in the decoder (JPEG DCT scaling / box filter) to bound memory,
+    then resized exactly with our anti-aliased bicubic.
 
     Raises :class:`ImageLoadError` with a human-readable message on failure.
     """
@@ -111,20 +118,53 @@ def load_image(path: str | Path) -> LoadedImage:
     if p.suffix.lower() not in SUPPORTED_EXTENSIONS:
         raise ImageLoadError(
             f"Unsupported file type '{p.suffix}'. Supported: {sorted(SUPPORTED_EXTENSIONS)}")
+    old_limit = Image.MAX_IMAGE_PIXELS
+    Image.MAX_IMAGE_PIXELS = max(int(max_pixels), old_limit or 0)
+    reduced_by = 1
     try:
         with Image.open(p) as pil:
-            if pil.width * pil.height > MAX_INPUT_PIXELS:
+            if pil.width * pil.height > max_pixels:
                 raise ImageLoadError(
-                    f"Image is {pil.width}x{pil.height}; inputs above {MAX_INPUT_PIXELS:,} px are refused.")
+                    f"Image is {pil.width}x{pil.height}; inputs above {max_pixels:,} px are refused.")
+            long0 = max(pil.size)
+            if max_long_side and long0 > 3 * max_long_side:
+                k = long0 // (2 * max_long_side)          # keep >= 2x margin for the exact resize
+                if pil.format == "JPEG":
+                    pil.draft(pil.mode, (pil.width // k, pil.height // k))
+                    reduced_by = round(long0 / max(pil.size))
+                pil.load()
+                if reduced_by < k:
+                    extra = max(1, k // reduced_by)
+                    pil = pil.reduce(extra)
+                    reduced_by *= extra
             pil.load()
             pil = ImageOps.exif_transpose(pil)
             loaded = pil_to_float(pil)
     except ImageLoadError:
         raise
-    except (UnidentifiedImageError, OSError, SyntaxError) as e:
+    except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError) as e:
         raise ImageLoadError(f"Could not read image {p.name}: file may be corrupt ({e}).") from e
+    finally:
+        Image.MAX_IMAGE_PIXELS = old_limit
+    if max_long_side and max(loaded.rgb.shape[:2]) > max_long_side:
+        from faithful_sr.models.interpolation import resize
+        h, w = loaded.rgb.shape[:2]
+        s = max_long_side / max(h, w)
+        nh, nw = max(1, round(h * s)), max(1, round(w * s))
+        loaded.rgb = resize(loaded.rgb, nh, nw, "bicubic")
+        if loaded.alpha is not None:
+            loaded.alpha = resize(loaded.alpha, nh, nw, "bicubic")
+        loaded.warnings.append(f"Reduced to {nw}x{nh} (decoder pre-reduction x{reduced_by}, then anti-aliased bicubic).")
     loaded.path = str(p)
     return loaded
+
+
+def flatten_alpha(img: LoadedImage, background=(0.0, 0.0, 0.0)) -> np.ndarray:
+    """Composite RGB over a solid background using the alpha channel (no-op without alpha)."""
+    if img.alpha is None:
+        return img.rgb
+    a = img.alpha[..., None]
+    return (img.rgb * a + np.asarray(background, np.float32) * (1 - a)).astype(np.float32)
 
 
 def save_image(img: np.ndarray, path: str | Path, alpha: Optional[np.ndarray] = None,

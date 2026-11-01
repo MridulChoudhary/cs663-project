@@ -45,6 +45,8 @@ python scripts/evaluate_model.py --config configs/eval_smoke.yaml --runtime --re
 ```
 
 ## Full pipeline (GPU — use `notebooks/colab_train_evaluate.ipynb` on Colab)
+On Colab, after any disconnect: re-run cell 1, then cell 2 (`scripts/colab_setup.py` unpacks the cached prepared dataset from Drive), then the cell you were on.
+
 ```bash
 python scripts/prepare_dataset.py --config configs/dataset.yaml
 python scripts/train_model.py --config configs/train_fsrnet_x3.yaml --resume auto

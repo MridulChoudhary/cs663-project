@@ -13,8 +13,8 @@ HDR = "%cd /content/cs663-project\nDRIVE = '/content/drive/MyDrive/cs663'\n"
 
 def train_cell(title, args, run, model_name):
     return ("code", f"""# {title}
-{HDR}!python scripts/train_model.py --config {args} --resume auto
-!test -f outputs/runs/{run}/best.pt && cp outputs/runs/{run}/best.pt models/{model_name}.pt && echo "saved models/{model_name}.pt\"""")
+{HDR}# the model is copied to models/ ONLY if training completes without error (single shell line with &&)
+!python scripts/train_model.py --config {args} --resume auto && cp outputs/runs/{run}/best.pt models/{model_name}.pt && echo "FINISHED - saved models/{model_name}.pt\"""")
 
 
 cells = [

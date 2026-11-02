@@ -115,3 +115,15 @@ def test_missing_checkpoint_message(tmp_path):
     from faithful_sr.training.checkpointing import load_checkpoint
     with pytest.raises(FileNotFoundError, match="Train a model first"):
         load_checkpoint(tmp_path / "nope.pt")
+
+
+def test_restore_rng_accepts_non_cpu_style_tensors():
+    """Checkpoints loaded with map_location='cuda' give GPU tensors; restore_rng must coerce to CPU uint8."""
+    import random
+    from faithful_sr.training.checkpointing import restore_rng
+    torch.manual_seed(5)
+    state = {"python": random.getstate(), "numpy": np.random.get_state(),
+             "torch": torch.get_rng_state().to(torch.int64), "cuda": None}   # wrong dtype, like a moved tensor
+    a = torch.rand(3)
+    restore_rng({"rng": state})
+    assert torch.equal(torch.rand(3), a)

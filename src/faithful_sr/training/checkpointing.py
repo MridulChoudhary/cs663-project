@@ -50,11 +50,17 @@ def restore_rng(state: dict) -> None:
     rng = state.get("rng")
     if not rng:
         return
+    # RNG states must be CPU ByteTensors; a checkpoint loaded with map_location="cuda"
+    # would otherwise hand GPU tensors to set_rng_state (TypeError on resume).
+    to_cpu = lambda t: torch.as_tensor(t).detach().to("cpu", torch.uint8)  # noqa: E731
     random.setstate(rng["python"])
     np.random.set_state(rng["numpy"])
-    torch.set_rng_state(rng["torch"])
+    torch.set_rng_state(to_cpu(rng["torch"]))
     if rng.get("cuda") is not None and torch.cuda.is_available():
-        torch.cuda.set_rng_state_all(rng["cuda"])
+        try:
+            torch.cuda.set_rng_state_all([to_cpu(t) for t in rng["cuda"]])
+        except (RuntimeError, ValueError) as e:   # e.g. different GPU count/model after a reconnect
+            print(f"[resume] CUDA RNG state not restored ({e}); continuing with a fresh CUDA seed")
 
 
 def find_resume(output_dir: Path) -> Optional[Path]:

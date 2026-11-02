@@ -53,7 +53,7 @@ def bootstrap_ci(x: np.ndarray, n: int = 2000, seed: int = 0) -> tuple[float, fl
 
 def summarise(df: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
     cols = [m for m in METRICS if m in df and df[m].notna().any()]
-    g = df.groupby(keys)[cols]
+    g = df.groupby(keys, observed=True)[cols]
     out = g.mean().add_suffix("_mean").join(g.std().add_suffix("_std")).join(g.size().rename("n"))
     return out.reset_index()
 

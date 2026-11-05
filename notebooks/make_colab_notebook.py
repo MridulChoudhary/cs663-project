@@ -79,7 +79,8 @@ import glob
 !tail -n 2 outputs/runs/*/val_log.csv 2>/dev/null
 for f in sorted(glob.glob('outputs/runs/*/curves.png')):
     print(f); display(Image(f))"""),
-    ("code", f"""# 5. Pretrained comparator weights (explicit download) + full benchmark (E1-E8)
+    ("code", f"""# 5. Pretrained comparator weights (explicit download) + full benchmark (E1-E8), ~1.5-2 h.
+#    Resumable: after a disconnect run cells 1, 2 and this cell again - finished results are skipped.
 #    Needs cell 2 done in this session. Methods without a checkpoint are reported as 'not run'.
 {HDR}!python scripts/download_weights.py
 !python scripts/evaluate_model.py --config configs/eval.yaml --runtime --real-world

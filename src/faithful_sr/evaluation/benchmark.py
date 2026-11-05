@@ -42,15 +42,23 @@ def slug(s: str) -> str:
 
 
 class CsvWriter:
+    """Row-by-row CSV writer that appends to an existing file (keeps its header) - used for resume."""
+
     def __init__(self, path: Path):
         self.path, self.f, self.w = path, None, None
 
     def write(self, row: dict) -> None:
         if self.w is None:
             self.path.parent.mkdir(parents=True, exist_ok=True)
-            self.f = open(self.path, "w", newline="", encoding="utf-8")
-            self.w = csv.DictWriter(self.f, fieldnames=list(row), extrasaction="ignore")
-            self.w.writeheader()
+            exists = self.path.exists() and self.path.stat().st_size > 0
+            fields = list(row)
+            if exists:
+                with open(self.path, newline="", encoding="utf-8") as f:
+                    fields = next(csv.reader(f))
+            self.f = open(self.path, "a" if exists else "w", newline="", encoding="utf-8")
+            self.w = csv.DictWriter(self.f, fieldnames=fields, extrasaction="ignore")
+            if not exists:
+                self.w.writeheader()
         self.w.writerow(row)
         self.f.flush()
 
@@ -85,7 +93,29 @@ def run_benchmark(cfg: dict, log=print) -> dict:
     if "lpips" in cfg.get("metrics", []) and lp is None:
         log("[benchmark] LPIPS unavailable (pip install lpips; needs AlexNet weights) - column left empty")
 
-    per_img, per_roi, status = CsvWriter(out / "metrics_per_image.csv"), CsvWriter(out / "roi_metrics.csv"), []
+    # ---- resume: rows already measured (image, method, scale, degradation) are skipped
+    done: set = set()
+    mpath = out / "metrics_per_image.csv"
+    if cfg.get("resume", True) and mpath.exists():
+        with open(mpath, newline="", encoding="utf-8") as f:
+            done = {(r["image_id"], r["method"], int(r["scale"]), r["degradation"]) for r in csv.DictReader(f)}
+        # drop ROI rows of combinations without a finished image-level row (interrupted mid-write)
+        rpath = out / "roi_metrics.csv"
+        if rpath.exists():
+            with open(rpath, newline="", encoding="utf-8") as f:
+                rows_r = list(csv.DictReader(f))
+            keep = [r for r in rows_r if (r["image_id"], r["method"], int(r["scale"]), r["degradation"]) in done]
+            if len(keep) != len(rows_r) and rows_r:
+                with open(rpath, "w", newline="", encoding="utf-8") as f:
+                    w = csv.DictWriter(f, fieldnames=list(rows_r[0]))
+                    w.writeheader()
+                    w.writerows(keep)
+        log(f"[benchmark] resuming: {len(done)} (image, method, scale, degradation) results already saved")
+    elif mpath.exists():
+        for p in (mpath, out / "roi_metrics.csv"):
+            p.unlink(missing_ok=True)
+    per_img, per_roi, status = CsvWriter(mpath), CsvWriter(out / "roi_metrics.csv"), []
+    t_start, n_new = time.time(), 0
     rois_used: dict[str, list] = {}
     hr_cache: dict[str, np.ndarray] = {}
 
@@ -120,6 +150,9 @@ def run_benchmark(cfg: dict, log=print) -> dict:
                     iid, hr, manual_rois, not iid.startswith(tuple(cfg.get("auto_face_exclude_prefixes", [])))))
                 outputs: dict[str, np.ndarray] = {}
                 for label, fn in fns.items():
+                    vis_file = out / "visuals" / f"x{scale}" / deg / f"{iid}_grid.png"
+                    if (iid, label, scale, deg) in done and not (iid in visual_ids and not vis_file.exists()):
+                        continue
                     t0 = time.perf_counter()
                     try:
                         sr = fn(lr, scale)
@@ -137,8 +170,10 @@ def run_benchmark(cfg: dict, log=print) -> dict:
                            "edge_psnr": M.edge_psnr(sr, hr, scale), "overshoot": M.overshoot(sr, hr, scale),
                            "lpips": lp(sr, hr, scale) if lp else float("nan"), "runtime_s": rt,
                            "width": hr.shape[1], "height": hr.shape[0]}
-                    per_img.write(rec)
-                    for r in rois:
+                    if (iid, label, scale, deg) not in done:
+                        per_img.write(rec)
+                        n_new += 1
+                    for r in (rois if (iid, label, scale, deg) not in done else []):
                         per_roi.write({"image_id": iid, "categories": ";".join(cats), "method": label,
                                        "scale": scale, "degradation": deg, "roi": r["label"],
                                        "roi_source": r["source"], **roi_metrics(sr, hr, r["box"])})
@@ -148,7 +183,8 @@ def run_benchmark(cfg: dict, log=print) -> dict:
                             save_image(sr, out / "sr" / f"x{scale}" / deg / slug(label) / f"{iid}.png")
                 if iid in visual_ids and outputs:
                     save_visuals(out / "visuals" / f"x{scale}" / deg, iid, lr, hr, outputs, rois, scale)
-                log(f"[benchmark] x{scale} {deg} {iid}: {len(outputs) or len(fns)} methods")
+                el = time.time() - t_start
+                log(f"[benchmark] x{scale} {deg} {iid}: done ({n_new} new results, {el / 60:.1f} min elapsed)")
     per_img.close()
     per_roi.close()
     with open(out / "status.csv", "w", newline="", encoding="utf-8") as f:

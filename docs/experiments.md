@@ -34,5 +34,6 @@ python scripts/evaluate_model.py --config configs/eval.yaml --runtime --real-wor
 ## Protocol notes
 * Test set fixed before training: DIV2K-valid test half (50 photos) + user posters. Validation half used only for checkpoint selection.
 * Same LR inputs, crop border and Y-channel convention for every method.
+* The benchmark is resumable: re-running `evaluate_model.py` skips (image, method, scale, degradation) results already in `metrics_per_image.csv` (`resume: false` starts over).
 * Runtime excludes model loading; median of 3 repeats after 1 warm-up; GPU memory = `torch.cuda.max_memory_allocated`.
 * Real-world images: 74 AI-upscaled posters, downscaled ×4 (≤1280 px) and super-resolved ×3; grids show the supplied commercial upscale as a labelled reference (not ground truth). No scores.

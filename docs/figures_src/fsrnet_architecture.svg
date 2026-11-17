@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 365" font-family="DejaVu Sans, Arial, sans-serif">
+  <rect width="1200" height="365" fill="#ffffff"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#52514e"/>
+    </marker>
+  </defs>
+  <!-- input -->
+  <rect x="20" y="120" width="110" height="80" rx="8" fill="#eef4fc" stroke="#2a78d6" stroke-width="2"/>
+  <text x="75" y="155" text-anchor="middle" font-size="15" font-weight="bold" fill="#0b0b0b">LR input</text>
+  <text x="75" y="177" text-anchor="middle" font-size="13" fill="#52514e">H × W × 3</text>
+  <!-- head -->
+  <rect x="165" y="120" width="105" height="80" rx="8" fill="#fdf0e9" stroke="#eb6834" stroke-width="2"/>
+  <text x="217" y="155" text-anchor="middle" font-size="15" font-weight="bold">Head</text>
+  <text x="217" y="177" text-anchor="middle" font-size="13" fill="#52514e">conv 3×3, 48</text>
+  <!-- res blocks -->
+  <rect x="305" y="100" width="300" height="120" rx="10" fill="#fdf0e9" stroke="#eb6834" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="455" y="92" text-anchor="middle" font-size="14" font-weight="bold" fill="#eb6834">8 × residual block (no batch-norm)</text>
+  <rect x="325" y="130" width="70" height="60" rx="6" fill="#ffffff" stroke="#eb6834"/>
+  <text x="360" y="157" text-anchor="middle" font-size="12">conv 3×3</text>
+  <text x="360" y="174" text-anchor="middle" font-size="12">ReLU</text>
+  <rect x="415" y="130" width="70" height="60" rx="6" fill="#ffffff" stroke="#eb6834"/>
+  <text x="450" y="165" text-anchor="middle" font-size="12">conv 3×3</text>
+  <circle cx="525" cy="160" r="15" fill="#ffffff" stroke="#eb6834" stroke-width="2"/>
+  <text x="525" y="166" text-anchor="middle" font-size="18">+</text>
+  <path d="M395,160 L413,160" stroke="#52514e" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M485,160 L508,160" stroke="#52514e" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M315,160 C315,210 525,215 525,177" stroke="#52514e" stroke-width="1.5" fill="none" marker-end="url(#a)"/>
+  <text x="420" y="212" text-anchor="middle" font-size="11" fill="#52514e">identity skip</text>
+  <path d="M540,160 L590,160" stroke="#52514e" stroke-width="2"/>
+  <!-- tail + long skip -->
+  <rect x="640" y="120" width="105" height="80" rx="8" fill="#fdf0e9" stroke="#eb6834" stroke-width="2"/>
+  <text x="692" y="150" text-anchor="middle" font-size="14" font-weight="bold">Body tail</text>
+  <text x="692" y="172" text-anchor="middle" font-size="12" fill="#52514e">conv 3×3</text>
+  <text x="692" y="189" text-anchor="middle" font-size="12" fill="#52514e">+ long skip</text>
+  <!-- upsampler -->
+  <rect x="780" y="120" width="150" height="80" rx="8" fill="#fdf0e9" stroke="#eb6834" stroke-width="2"/>
+  <text x="855" y="148" text-anchor="middle" font-size="14" font-weight="bold">Sub-pixel up ×3</text>
+  <text x="855" y="168" text-anchor="middle" font-size="12" fill="#52514e">conv → 27 ch</text>
+  <text x="855" y="186" text-anchor="middle" font-size="12" fill="#52514e">PixelShuffle(3)</text>
+  <circle cx="985" cy="160" r="18" fill="#ffffff" stroke="#0b0b0b" stroke-width="2"/>
+  <text x="985" y="167" text-anchor="middle" font-size="20">+</text>
+  <rect x="1040" y="120" width="140" height="80" rx="8" fill="#eef4fc" stroke="#2a78d6" stroke-width="2"/>
+  <text x="1110" y="155" text-anchor="middle" font-size="15" font-weight="bold">SR output</text>
+  <text x="1110" y="177" text-anchor="middle" font-size="13" fill="#52514e">3H × 3W × 3</text>
+  <!-- arrows -->
+  <path d="M130,160 L162,160" stroke="#52514e" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M270,160 L302,160" stroke="#52514e" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M605,160 L637,160" stroke="#52514e" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M745,160 L777,160" stroke="#52514e" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M930,160 L964,160" stroke="#52514e" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M1003,160 L1037,160" stroke="#52514e" stroke-width="2" marker-end="url(#a)"/>
+  <!-- bicubic skip -->
+  <path d="M75,200 L75,262 L985,262 L985,180" stroke="#2a78d6" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <rect x="385" y="276" width="370" height="30" rx="6" fill="#ffffff" stroke="#2a78d6"/>
+  <text x="570" y="296" text-anchor="middle" font-size="13" fill="#2a78d6">global bicubic skip: network learns HR − bicubic(LR)</text>
+  <text x="600" y="28" text-anchor="middle" font-size="17" font-weight="bold" fill="#0b0b0b">FSRNet (ours): all convolutions at low resolution · 366k parameters · receptive field 43 LR px</text>
+  <text x="600" y="345" text-anchor="middle" font-size="12" fill="#52514e">last conv zero-initialised → training starts exactly at bicubic; loss L1 (or MSE); Adam, cosine LR, 30k iterations</text>
+</svg>

@@ -8,7 +8,7 @@ scales: [3, 6]
 degradations: [bicubic, mixed]     # E5: clean vs. controlled realistic degradation
 metrics: [psnr_y, ssim_y, lpips]   # psnr_rgb / edge_psnr / overshoot are always computed
 n_visual: 8                        # images that get saved outputs + comparison grids
-visual_ids: []                     # or list specific image ids (e.g. your best posters)
+visual_ids: [poster_1401918, poster_1166038, poster_1329765, poster_1253488, poster_813161, div2kval_0801, div2kval_0803, div2kval_0805]  # posters first (2026-11-17); previously the first 8 = DIV2K only
 save_outputs: true
 rois: data/rois.json               # manual text_logo / text_small / face boxes (assistant-annotated, author-reviewed)
 auto_face_exclude_prefixes: [poster_]   # Haar face detector is unreliable on stylized art; posters use manual faces

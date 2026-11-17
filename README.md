@@ -60,6 +60,16 @@ python scripts/upscale.py poster.png --method cnn --checkpoint models/fsrnet_x3_
 python scripts/launch_gui.py            # http://127.0.0.1:7860   (--share for a public link on Colab)
 ```
 
+## Report and slides (rebuilt from saved results)
+Unzip the Colab results (`eval_main.zip`) into `outputs/eval/main` and put the trained checkpoints in `models/`, then:
+```bash
+python scripts/make_figures.py          # charts + region crops -> outputs/figures/
+python scripts/build_report.py          # -> outputs/report/CS663_Faithful_SR_Report.pdf
+python scripts/export_deck_numbers.py   # -> outputs/report/deck_numbers.json
+PPTX_SKILL=<path to pptx helper> node scripts/build_deck.js   # -> outputs/report/CS663_Faithful_SR_Presentation.pptx
+```
+Every number in the report and slides is computed from `outputs/eval/main/*.csv`; nothing is typed in by hand. The PDF step needs `playwright` (Chromium) and the deck step needs `pptxgenjs` and `sharp` (npm).
+
 ## Licences and citations
 Code: project code by the CS663 team. DIV2K: academic use only, not redistributed. Real-ESRGAN weights:
 BSD-3-Clause (X. Wang et al., *Real-ESRGAN*, ICCVW 2021, https://github.com/xinntao/Real-ESRGAN), loaded with

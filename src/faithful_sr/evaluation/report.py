@@ -169,12 +169,20 @@ def build_report(run_dir: str | Path) -> Path:
     rep = run / "report"
     rep.mkdir(exist_ok=True)
     df = pd.read_csv(run / "metrics_per_image.csv")
+    n0 = len(df)
+    df = df.drop_duplicates(["image_id", "method", "scale", "degradation"], keep="last")
+    if len(df) != n0:
+        print(f"[report] dropped {n0 - len(df)} duplicate result row(s)")
+    df["source"] = df["image_id"].str.split("_").str[0]
     status = pd.read_csv(run / "status.csv") if (run / "status.csv").exists() else pd.DataFrame()
     keys = ["scale", "degradation", "method"]
     order = list(dict.fromkeys(df.method))
     df["method"] = pd.Categorical(df.method, order, ordered=True)
     summ = summarise(df, keys)
     summ.to_csv(rep / "summary_by_method.csv", index=False)
+    summarise(df.assign(method=df.method.astype(str)), ["source"] + keys).to_csv(rep / "summary_by_source.csv", index=False)
+    ps = [paired_vs_reference(g.assign(method=g.method.astype(str))).assign(source=src) for src, g in df.groupby("source")]
+    pd.concat(ps).to_csv(rep / "paired_vs_bicubic_by_source.csv", index=False)
     cat = explode_categories(df)
     summ_cat = summarise(cat, ["category"] + keys)
     summ_cat.to_csv(rep / "summary_by_category.csv", index=False)

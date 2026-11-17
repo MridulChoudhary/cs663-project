@@ -94,6 +94,9 @@ for f in sorted(glob.glob('outputs/eval/main/report/fig_*.png')):
     print(f); display(Image(f))"""),
     ("code", f"""# 7. (optional) GUI with a temporary public link - this cell keeps running until you stop it
 {HDR}!python scripts/launch_gui.py --share"""),
+    ("code", f"""# 8. Download the results: one zip on Drive (per-image SR outputs excluded, ~220 MB)
+{HDR}%cd outputs/eval
+!zip -qr {{DRIVE}}/eval_main.zip main -x "main/sr/*" && ls -lh {{DRIVE}}/eval_main.zip"""),
 ]
 
 nb = {"nbformat": 4, "nbformat_minor": 5,

@@ -37,10 +37,9 @@ const sgn = (v, d = 2) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(d);
 
   // ---------- layouts
   pres.defineSlideMaster({
-    title: "TITLE_DARK", background: { color: C.text2 },
+    title: "TITLE", background: { color: C.background1 },
     objects: [
-      { placeholder: { options: { name: "title", type: "title", x: 0.7, y: 1.5, w: 11.9, h: 1.9, fontSize: 40, bold: true, color: C.background1, valign: "bottom", align: "left" }, text: "" } },
-      { placeholder: { options: { name: "body", type: "body", x: 0.7, y: 3.65, w: 11.9, h: 3.0, fontSize: 20, color: "D9D9E3", valign: "top" }, text: "" } },
+      { placeholder: { options: { name: "title", type: "title", x: 0.6, y: 1.2, w: 7.0, h: 2.35, fontSize: 36, bold: true, color: C.text2, valign: "bottom", align: "left", margin: 0 }, text: "" } },
     ],
   });
   pres.defineSlideMaster({
@@ -82,14 +81,26 @@ const sgn = (v, d = 2) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(d);
 
   // ================= 1. Title
   pres.addSection({ title: "Introduction" });
-  let s = pres.addSlide({ masterName: "TITLE_DARK", sectionTitle: "Introduction" });
+  let s = pres.addSlide({ masterName: "TITLE", sectionTitle: "Introduction" });
+  txt(s, "CS663 · DIGITAL IMAGE PROCESSING · COURSE PROJECT", { x: 0.6, y: 0.75, w: 6.9, h: 0.35, fontSize: 13, bold: true, color: C.accent1, charSpacing: 1 });
   s.addText("Faithful Image Super-Resolution for Movie Posters and Digital Artwork", { placeholder: "title" });
-  s.addText([
-    { text: "720p → 4K / 8K: how much detail can we really recover — and who invents it?", options: { breakLine: true, italic: true } },
-    { text: " ", options: { breakLine: true, fontSize: 10 } },
-    { text: "Mridul Choudhary (23B3933)  ·  Jashanpreet Singh (23B0985)", options: { breakLine: true, bold: true, color: "FFFFFF" } },
-    { text: "CS663 Digital Image Processing — Course Project" },
-  ], { placeholder: "body" });
+  txt(s, "720p → 4K / 8K: how much detail can we really recover — and who invents it?", { x: 0.6, y: 3.75, w: 6.9, h: 0.8, fontSize: 18, italic: true, color: HEX.muted });
+  s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 0.6, y: 4.85, w: 6.9, h: 1.25, fill: { color: C.background2 }, line: { color: C.background2 }, rectRadius: 0.12, objectName: "authors card" });
+  [["Mridul Choudhary", "23B3933"], ["Jashanpreet Singh", "23B0985"]].forEach(([nm, roll], k) => {
+    const x = 0.9 + k * 3.35;
+    s.addShape(pres.shapes.OVAL, { x, y: 5.17, w: 0.6, h: 0.6, fill: { color: C.accent1 }, line: { color: C.accent1 }, objectName: "author dot " + k });
+    txt(s, nm.split(" ").map((w) => w[0]).join(""), { x, y: 5.17, w: 0.6, h: 0.6, fontSize: 16, bold: true, color: C.background1, align: "center", valign: "middle" });
+    txt(s, nm, { x: x + 0.75, y: 5.12, w: 2.5, h: 0.4, fontSize: 17, bold: true, color: HEX.dark });
+    txt(s, roll, { x: x + 0.75, y: 5.5, w: 2.5, h: 0.35, fontSize: 14, color: HEX.muted });
+  });
+  const famLeg = [[HEX.classical, "Classical"], [HEX.ours, "FSRNet (ours)"], [HEX.pre, "Real-ESRGAN"]];
+  famLeg.forEach(([col, lab], k) => {
+    const x = 0.6 + k * 2.3;
+    s.addShape(pres.shapes.OVAL, { x, y: 6.5, w: 0.22, h: 0.22, fill: { color: col }, line: { color: col }, objectName: "legend " + k });
+    txt(s, lab, { x: x + 0.32, y: 6.45, w: 1.9, h: 0.32, fontSize: 13, color: HEX.muted, valign: "middle" });
+  });
+  s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 7.95, y: 0.55, w: 4.8, h: 6.4, fill: { color: C.background2 }, line: { color: C.background2 }, rectRadius: 0.15, objectName: "hero card" });
+  await pic(s, FIG + "slide_poster_1401918_text_small_bicubic.png", 8.15, 0.75, 4.4, 6.0);
   s.addNotes("[0:00–0:30] Introduce ourselves and the question: when we enlarge a poster from 720p to 4K or 8K, which methods recover the real detail, and which ones make it up? We built and trained our own network and compared it with interpolation and with a popular pretrained upscaler.");
 
   // ================= 2. Problem
@@ -299,14 +310,26 @@ const sgn = (v, d = 2) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(d);
 
   // ================= 13. Conclusion
   pres.addSection({ title: "Conclusion" });
-  s = pres.addSlide({ masterName: "TITLE_DARK", sectionTitle: "Conclusion" });
-  s.addText("Conclusions", { placeholder: "title" });
-  s.addText([
-    { text: `A small task-specific CNN is the most faithful upscaler for posters: ${sgn(N.e2p.mean, 1)} dB over bicubic, ${sgn(N.e3p.mean, 1)} dB over Real-ESRGAN, ~${Math.round(N.runtime["Real-ESRGAN|3"] / N.runtime["FSRNet-L1|3"])}× faster`, options: { bullet: true, breakLine: true } },
-    { text: "GANs win perceptually on degraded photos — by inventing detail; sharpness is not accuracy", options: { bullet: true, breakLine: true } },
-    { text: "Training degradations must match real inputs; the loss choice barely matters", options: { bullet: true, breakLine: true } },
-    { text: "Future work: fidelity-constrained perceptual fine-tuning, text-aware loss, dedicated 6× model, human study", options: { bullet: true } },
-  ], { placeholder: "body" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Conclusion" });
+  s.addText("Conclusions: faithful beats flashy for artwork", { placeholder: "title" });
+  const speed = Math.round(N.runtime["Real-ESRGAN|3"] / N.runtime["FSRNet-L1|3"]);
+  stat(s, sgn(N.e2p.mean, 1) + " dB", "FSRNet over bicubic on posters (better on every test image)", 0.6, 1.4, 3.9, C.accent1);
+  stat(s, sgn(N.e3p.mean, 1) + " dB", "FSRNet over Real-ESRGAN on posters — and lower LPIPS", 4.7, 1.4, 3.9, C.accent1);
+  stat(s, "~" + speed + "×", "faster than Real-ESRGAN at 720p→4K, with 0.37 M parameters", 8.8, 1.4, 3.9, C.accent1);
+  const take = [
+    ["1", "Sharpness ≠ accuracy", "The GAN wins perceptually on degraded photos, partly by inventing texture and thickening text."],
+    ["2", "Match the degradations", "Training on blur + noise + JPEG is worth more than any loss choice — but costs accuracy on clean inputs."],
+    ["3", "Future work", "Fidelity-constrained perceptual fine-tuning, a text-aware loss, a dedicated 6× model and a human study."],
+  ];
+  take.forEach(([n, h, d], k) => {
+    const x = 0.6 + k * 4.1, y = 3.35;
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y, w: 3.9, h: 2.3, fill: { color: C.background2 }, line: { color: C.background2 }, rectRadius: 0.12, objectName: "takeaway " + n });
+    s.addShape(pres.shapes.OVAL, { x: x + 0.25, y: y + 0.25, w: 0.6, h: 0.6, fill: { color: k === 2 ? C.accent2 : C.accent1 }, line: { color: k === 2 ? C.accent2 : C.accent1 }, objectName: "take num " + n });
+    txt(s, n, { x: x + 0.25, y: y + 0.25, w: 0.6, h: 0.6, fontSize: 20, bold: true, color: C.background1, align: "center", valign: "middle" });
+    txt(s, h, { x: x + 1.0, y: y + 0.3, w: 2.75, h: 0.5, fontSize: 19, bold: true, color: HEX.dark, valign: "middle" });
+    txt(s, d, { x: x + 0.25, y: y + 1.05, w: 3.4, h: 1.55, fontSize: 15, color: C.text1 });
+  });
+  txt(s, "Thank you — questions?  ·  Live demo: Gradio GUI (scripts/launch_gui.py)", { x: 0.6, y: 6.05, w: 12.1, h: 0.4, fontSize: 18, bold: true, color: C.accent1 });
   s.addNotes("[9:20–10:00] To conclude: for faithful enlargement of artwork, a small network trained for the task beats both interpolation and a popular GAN on accuracy, and on posters even perceptually. GANs look great on degraded photos but partly by invention. And the biggest practical lever is matching training degradations to real inputs. Thank you — happy to take questions, and we can show the GUI live.");
 
   await pres.writeFile({ fileName: OUT });
